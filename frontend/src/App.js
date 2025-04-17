@@ -1,12 +1,22 @@
 // frontend/src/App.js
 import React, { useState } from "react";
-import api from "./api"; // Import the API service
-import "./App.css";  // This line links your CSS file to your component
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import api from "./api";
+import ProtectedRoute from "./ProtectedRoute"; // ✅ import it
+import "./App.css";
 
-const App = () => {
+// Component for Login/Register
+const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,11 +27,12 @@ const App = () => {
       : "http://localhost:5000/api/register";
 
     try {
-      const res = await api.post(url, form); // Use our custom api instance
+      const res = await api.post(url, form);
       alert(res.data.message);
 
       if (isLogin) {
         localStorage.setItem("token", res.data.token);
+        navigate("/dashboard"); // Redirect to dashboard
       }
     } catch (err) {
       alert(err.response?.data?.message || "Something went wrong");
@@ -72,10 +83,28 @@ const App = () => {
         </span>
       </p>
 
-      {/* Button to access protected route */}
       <button onClick={handleProtectedRequest}>Access Protected Route</button>
       <p>{message}</p>
     </div>
+  );
+};
+
+// Final App
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AuthForm />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 };
 
